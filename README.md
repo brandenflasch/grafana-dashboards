@@ -390,14 +390,45 @@ sensor:
 
 ---
 
+## Available Dashboards
+
+### 1. Template Dashboard (Recommended for New Users)
+**File:** `energy-monitor-template.json`
+
+A generic dashboard that auto-discovers your Emporia Vue devices:
+- **Variable-based**: Dropdown menus auto-populate with your device names
+- **No manual editing required**: Works out of the box with any Emporia setup
+- **Includes:**
+  - All devices stacked time series (auto-discovered)
+  - Selectable device comparison chart
+  - Main meter gauge (power + kWh)
+  - Energy consumption table (sorted by usage)
+  - Built-in customization guide
+
+**Best for:** First-time setup, testing, users who want quick results
+
+### 2. Custom Dashboard (Example)
+**File:** `energy-monitor.json`
+
+A fully customized dashboard with individual panels for each circuit:
+- Hardcoded device names (specific to one home's setup)
+- Optimized layout with all circuits visible
+- Separate main panel and subpanel sections
+- Individual power gauges + kWh gauges for every device
+
+**Best for:** Reference example, copying panel configurations
+
+---
+
 ## File Structure
 
 ```
 grafana-dashboards/
-├── README.md                 # This documentation
-├── energy-monitor.json       # Main Grafana dashboard
+├── README.md                      # This documentation
+├── energy-monitor-template.json   # Generic template (recommended)
+├── energy-monitor.json            # Custom example dashboard
 └── examples/
-    └── vuegraf.json.example  # Example Vuegraf configuration
+    └── vuegraf.json.example       # Example Vuegraf configuration
 ```
 
 ---
