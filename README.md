@@ -25,34 +25,37 @@ A complete guide to setting up real-time whole-home energy monitoring using Empo
 - Requires 2.4GHz WiFi connection
 - Cloud-connected (data accessed via API)
 
-### Circuit Configuration Example
+### Understanding Emporia Vue Circuit Naming
 
-**Main Panel (200A service):**
-| Circuit | Sensor | Description |
-|---------|--------|-------------|
-| Main-TotalUsage | Built-in | Total household consumption |
-| Main-1 | CT Clamp | Family Room |
-| Main-2 | CT Clamp | Washer |
-| Main-5 | CT Clamp | Kitchen/Garage Lights |
-| Main-9 | CT Clamp | Garage/Outside |
-| Main-10 | CT Clamp | Heat Pump |
-| Main-11 | CT Clamp | Water Heater |
-| Main-12 | CT Clamp | Dryer |
-| Main-13 | CT Clamp | Range |
-| Main-14 | CT Clamp | Aux Heat/Blower |
-| Main-97 | CT Clamp | Generator Inlet |
-| Main-Balance | Calculated | Unmonitored circuits |
+When Vuegraf pulls data from the Emporia API, devices are named based on your Emporia account and circuit configuration. The naming pattern is:
 
-**Subpanel (if applicable):**
-| Circuit | Sensor | Description |
-|---------|--------|-------------|
-| Subpanel | Built-in | Subpanel total |
-| Subpanel-3 | CT Clamp | Master/Nursery |
-| Subpanel-4 | CT Clamp | Garage Middle |
-| Subpanel-6 | CT Clamp | Tesla Wall Connector |
-| Subpanel-7 | CT Clamp | NEMA 14-50 Outlet |
-| Subpanel-8 | CT Clamp | Dishwasher |
-| Subpanel-Balance | Calculated | Unmonitored circuits |
+```
+[Account Name] - [Panel]-[Circuit Number]
+```
+
+**Common device name patterns:**
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `*-TotalUsage` | `My Home - Main-TotalUsage` | Whole-home consumption (built-in) |
+| `*-Main-[1-16]` | `My Home - Main-10` | Individual circuit on main panel |
+| `*-Balance` | `My Home - Main-Balance` | Unmonitored circuits (calculated) |
+| `Subpanel` | `Garage Subpanel` | Subpanel total (if configured) |
+| `Subpanel-[1-16]` | `Garage Subpanel-3` | Individual circuit on subpanel |
+
+**Example configurations by circuit type:**
+
+| Circuit Type | Typical Amperage | Examples |
+|--------------|------------------|----------|
+| 240V Large Appliance | 30-50A | Water heater, dryer, range, EV charger |
+| HVAC | 20-60A | Heat pump, AC condenser, furnace |
+| 120V Branch Circuit | 15-20A | Bedroom, kitchen outlets, bathroom |
+| Dedicated Circuit | 20A | Refrigerator, dishwasher, microwave |
+
+> **Tip:** To see your actual device names, run this query in InfluxDB:
+> ```sql
+> SHOW TAG VALUES FROM "energy_usage" WITH KEY = "device_name"
+> ```
 
 ---
 
