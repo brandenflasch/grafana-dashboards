@@ -68,6 +68,225 @@ When Vuegraf pulls data from the Emporia API, devices are named based on your Em
 
 ---
 
+## Step 0: SSH Access Setup (Required)
+
+SSH access to your Home Assistant host is essential for:
+- Configuring Vuegraf
+- Troubleshooting data collection issues
+- Querying InfluxDB directly
+- Viewing container logs
+- Managing configuration files
+
+### Install the SSH Add-on
+
+1. In Home Assistant, go to **Settings → Add-ons → Add-on Store**
+2. Search for **"Terminal & SSH"** (official add-on) or **"SSH & Web Terminal"**
+3. Click **Install**
+4. Configure the add-on (see options below)
+5. **Enable "Start on boot"** and **"Watchdog"**
+6. Start the add-on
+
+### SSH Configuration Options
+
+#### Option A: Password Authentication (Simple)
+
+```yaml
+# Add-on Configuration
+ssh:
+  username: root
+  password: "your_secure_password_here"
+  authorized_keys: []
+  sftp: true
+  compatibility_mode: false
+  allow_agent_forwarding: false
+  allow_remote_port_forwarding: false
+  allow_tcp_forwarding: false
+```
+
+#### Option B: SSH Key Authentication (Recommended)
+
+1. **Generate an SSH key** (if you don't have one):
+   ```bash
+   # On your local machine (Mac/Linux)
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+
+   # Or for older systems
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+   ```
+
+2. **Copy your public key**:
+   ```bash
+   # Display your public key
+   cat ~/.ssh/id_ed25519.pub
+   # Or
+   cat ~/.ssh/id_rsa.pub
+   ```
+
+3. **Add to SSH add-on configuration**:
+   ```yaml
+   ssh:
+     username: root
+     password: ""
+     authorized_keys:
+       - ssh-ed25519 AAAAC3NzaC1lZDI1... your_email@example.com
+     sftp: true
+     compatibility_mode: false
+     allow_agent_forwarding: false
+     allow_remote_port_forwarding: false
+     allow_tcp_forwarding: false
+   ```
+
+4. **Restart the SSH add-on**
+
+### Find Your Home Assistant IP Address
+
+In Home Assistant: **Settings → System → Network**
+
+Or check your router's DHCP client list. Common addresses:
+- `192.168.1.x` or `192.168.0.x` (most routers)
+- `192.168.86.x` (Google Wifi/Nest)
+- `10.0.0.x` (some networks)
+
+> **Tip:** Set a static IP or DHCP reservation for your Home Assistant device.
+
+### Test SSH Connection
+
+```bash
+# Basic connection test
+ssh root@YOUR_HA_IP_ADDRESS
+
+# Example
+ssh root@192.168.1.100
+
+# With specific key file
+ssh -i ~/.ssh/id_ed25519 root@192.168.1.100
+```
+
+### Using Claude Code with SSH
+
+Claude Code can SSH directly into your Home Assistant to help troubleshoot and configure. Here's how to use it effectively:
+
+#### Prompt Template for Claude Code SSH Access
+
+Copy and customize this prompt when starting a Claude Code session:
+
+```
+I need help with my Home Assistant energy monitoring setup.
+
+**SSH Access:**
+- Host: YOUR_HA_IP_ADDRESS (e.g., 192.168.1.100)
+- User: root
+- Auth: [password / SSH key at ~/.ssh/id_ed25519]
+
+**Current Setup:**
+- Home Assistant OS
+- InfluxDB add-on (database: emporia_vue_detailed)
+- Vuegraf for Emporia Vue data collection
+- Grafana for visualization
+
+**Issue/Task:**
+[Describe what you need help with]
+
+Please SSH in and help me diagnose/configure this.
+```
+
+#### Example Claude Code SSH Commands
+
+Once Claude Code has SSH access, it can run commands like:
+
+```bash
+# Check if Vuegraf is running
+docker ps | grep vuegraf
+
+# View Vuegraf logs (last 50 lines)
+docker logs addon_vuegraf 2>&1 | tail -50
+
+# Check InfluxDB data
+docker exec -it addon_a0d7b954_influxdb influx \
+  -database emporia_vue_detailed \
+  -execute "SELECT * FROM energy_usage LIMIT 5"
+
+# List all device names in InfluxDB
+docker exec -it addon_a0d7b954_influxdb influx \
+  -database emporia_vue_detailed \
+  -execute "SHOW TAG VALUES FROM energy_usage WITH KEY = device_name"
+
+# Check Vuegraf configuration
+cat /config/vuegraf/vuegraf.json
+
+# Restart Vuegraf add-on
+ha addons restart addon_vuegraf
+
+# View Home Assistant logs
+ha core logs | tail -100
+
+# Check disk space
+df -h
+
+# Check memory usage
+free -m
+```
+
+### SSH Config File (Optional)
+
+For easier access, add to `~/.ssh/config` on your local machine:
+
+```
+Host homeassistant
+    HostName 192.168.1.100
+    User root
+    IdentityFile ~/.ssh/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+```
+
+Then connect with just:
+```bash
+ssh homeassistant
+```
+
+### Common SSH Tasks for This Setup
+
+| Task | Command |
+|------|---------|
+| Check Vuegraf status | `docker ps \| grep vuegraf` |
+| View Vuegraf logs | `docker logs addon_vuegraf 2>&1 \| tail -100` |
+| Restart Vuegraf | `ha addons restart addon_vuegraf` |
+| Query InfluxDB | `docker exec -it addon_a0d7b954_influxdb influx -database emporia_vue_detailed -execute "YOUR_QUERY"` |
+| Edit Vuegraf config | `nano /config/vuegraf/vuegraf.json` |
+| List running containers | `docker ps` |
+| Check container logs | `docker logs CONTAINER_NAME` |
+| Restart Home Assistant | `ha core restart` |
+| View system info | `ha info` |
+
+### Troubleshooting SSH Connection
+
+**Connection refused:**
+- Verify SSH add-on is running
+- Check if port 22 is exposed in add-on config
+- Confirm IP address is correct
+
+**Permission denied:**
+- Verify password or SSH key is correct
+- Check `authorized_keys` format (no line breaks)
+- Ensure SSH add-on config is saved and restarted
+
+**Host key verification failed:**
+```bash
+# Remove old host key
+ssh-keygen -R YOUR_HA_IP_ADDRESS
+
+# Or connect with strict checking disabled (less secure)
+ssh -o StrictHostKeyChecking=no root@YOUR_HA_IP_ADDRESS
+```
+
+**Timeout:**
+- Home Assistant may be on a different network/VLAN
+- Check firewall rules
+- Verify Home Assistant is powered on and booted
+
+---
+
 ## Step 1: Install InfluxDB Add-on
 
 1. In Home Assistant, go to **Settings → Add-ons → Add-on Store**
