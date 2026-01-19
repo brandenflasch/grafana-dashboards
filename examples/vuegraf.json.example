@@ -1,0 +1,21 @@
+{
+  "influxDb": {
+    "version": 1,
+    "host": "a0d7b954-influxdb",
+    "port": 8086,
+    "database": "emporia_vue_detailed",
+    "user": "YOUR_INFLUXDB_USER",
+    "pass": "YOUR_INFLUXDB_PASSWORD"
+  },
+  "updateIntervalSecs": 5,
+  "detailedDataEnabled": true,
+  "detailedIntervalSecs": 15,
+  "lagSecs": 2,
+  "accounts": [
+    {
+      "name": "home",
+      "email": "YOUR_EMPORIA_EMAIL@example.com",
+      "password": "YOUR_EMPORIA_PASSWORD"
+    }
+  ]
+}
